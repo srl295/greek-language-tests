@@ -9,6 +9,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v4
+      - run: sudo apt-get install -y python3 ninja-build meson
       - run: |
             cd icu4c
             meson setup build
