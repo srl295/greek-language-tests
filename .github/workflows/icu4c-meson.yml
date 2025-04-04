@@ -12,12 +12,25 @@ jobs:
         uses: actions/checkout@v4
       - name: meson setup
         run: sudo apt-get install -y python3 ninja-build meson
+      - run: mkdir -p ${{ github.workspace }}/.packagecache
+      - name: Cache .packagecache
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.packagecache
+          key: meson-${{ github.base_ref }}-${{ github.sha }}
+          restore-keys: |
+            meson-${{ github.base_ref }}-${{ github.sha }}
+            meson-${{ github.base_ref }}
+            meson-      
       - name: meson compile
         run: |
+            mkdir -p ~/.packagecache
             cd icu4c
             meson setup build
             cd build
             meson compile
+        env:
+            MESON_PACKAGE_CACHE_DIR: ${{ github.workspace }}/.packagecache
       - name: meson test
         run: |
             cd icu4c/build && meson test -v
