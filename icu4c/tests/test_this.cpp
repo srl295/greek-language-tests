@@ -46,15 +46,15 @@ TEST(SetupOk, Basic)
     ASSERT_EQ(string("el"), string(uloc_getDefault()));
 }
 
-TEST(CaseTest, Basic)
+TEST(CaseTestI, Basic)
 {
-
     // I. Basic Case Conversion
     {
         // Test 1 simple lowercase to uppercase
         // ----
         const u16string input  = u"αβγδεζηθικλμνξοπρστυφχψω";
-        const u16string expect = u"ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ";    UErrorCode status = U_ZERO_ERROR;
+        const u16string expect = u"ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ";
+        UErrorCode status = U_ZERO_ERROR;
 
         UnicodeString s = input;
         // ----
@@ -73,7 +73,84 @@ TEST(CaseTest, Basic)
         // ----
         ASSERT_EQ_UTF8(expect, s);
     }
+    {
+        // Test3: Mixed Case
+        // ----
+        const u16string input   = u"ΑβΓδΕζΗθΙκΛμΝξΟπΡσΤυΦχΨω";
+        const u16string expectu = u"ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ";
+        const u16string expectl = u"αβγδεζηθικλμνξοπρστυφχψω";
+        UnicodeString sl = input;
+        UnicodeString su = input;
+        // ----
+        sl.toLower();
+        su.toUpper();
+        // ----
+        ASSERT_EQ_UTF8(expectl, sl);
+        ASSERT_EQ_UTF8(expectu, su);
+    }
 }
+
+static void assertUpper(const u16string &input, const u16string &expect) {
+        UnicodeString s = input;
+        // ----
+        s.toUpper();
+        // ----
+        ASSERT_EQ_UTF8(expect, s);
+}
+
+static void assertLower(const u16string &input, const u16string &expect) {
+        UnicodeString s = input;
+        // ----
+        s.toLower();
+        // ----
+        ASSERT_EQ_UTF8(expect, s);
+}
+
+
+// ## II. Sigma Handling (Final vs. Non-Final)
+TEST(SigmaTestII, Basic)
+{
+    // - Test 4: Non-Final Sigma to Uppercase (Simple Word):
+    {
+        const u16string input  = u"συνάδελφος";
+        const u16string expect = u"ΣΥΝΑΔΕΛΦΟΣ";
+        assertUpper(input, expect);
+    }
+// - Test 5: Final Sigma to Uppercase in multi-word string:
+    {
+        const u16string input  = u"Ένας καλός κόσμος είναι εδώ";
+        const u16string expect = u"ΕΝΑΣ ΚΑΛΟΣ ΚΟΣΜΟΣ ΕΙΝΑΙ ΕΔΩ";
+        assertUpper(input, expect);
+    }
+// - Test 6: Final Sigma to Lowercase:
+    {
+        const u16string input  = u"ΣΑΣ";
+        const u16string expect = u"σας";
+        assertLower(input, expect);
+    }
+// - Test 7: Multiple Sigmas in a Word (Mixed Cases):
+    {
+        const u16string input    = u"Συσσωματώσεις";
+        const u16string expectl  = u"συσσωματώσεις";
+        const u16string expectu  = u"ΣΥΣΣΩΜΑΤΩΣΕΙΣ";
+        assertLower(input, expectl);
+        assertUpper(input, expectu);
+    }
+// - Test 8: Final Sigma Before a Punctuation:
+    {
+        const u16string input    = u"Ο καιρός ήταν καλός.";
+        const u16string expectu  = u"Ο ΚΑΙΡΟΣ ΗΤΑΝ ΚΑΛΟΣ.";
+        assertUpper(input, expectu);
+    }
+// - Test 9: Final Sigma BeforeAfter a Punctuation:
+    {
+        const u16string input    = u"Ο ΚΑΙΡΟΣ ΗΤΑΝ ΚΑΛΟΣ";
+        const u16string expectl  = u"Ο καιρός ήταν καλός.";
+        assertLower(input, expectl);
+    }
+
+}
+
 
 GTEST_API_ int
 main(int argc, char **argv)
